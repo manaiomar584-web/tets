@@ -1,0 +1,554 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi Reparation - Aster Informatique</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <section class="auth-shell" id="authShell">
+    <div class="auth-card card">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="/static/logo.png" alt="Logo" style="height: 64px; width: auto; object-fit: contain;">
+      </div>
+      <h2>Connexion</h2>
+      <p>Connectez-vous pour acceder a la base de reparation.</p>
+      <form id="loginForm" class="auth-form">
+        <div class="field">
+          <label for="loginUsername">Nom d'utilisateur</label>
+          <input id="loginUsername" name="loginUsername" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Mot de passe</label>
+          <input id="loginPassword" name="loginPassword" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field full actions">
+          <button class="primary" type="submit">Se connecter</button>
+        </div>
+      </form>
+      <div class="auth-message" id="authMessage"></div>
+    </div>
+  </section>
+
+  <div class="page app-hidden" id="appShell">
+    <header class="branding-header card" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div id="companyLogo" style="width: 48px; height: 48px; background: white; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+          <img src="/static/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <div>
+          <h1 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--primary);">ASTER INFORMATIQUE</h1>
+          <p class="muted" style="margin: 0; font-size: 0.75rem;">Reparation Informatique â€¢ Imprimantes â€¢ Cameras â€¢ UPS</p>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div id="companyPhone" style="font-weight: 600; font-size: 0.875rem;">Tel: 71 881 002</div>
+        <div id="companyAddress" class="muted" style="font-size: 0.75rem;">Impasse 1, 06 Ave Abdellaziz Thaalbi, Tunis 1013</div>
+      </div>
+    </header>
+
+    <section class="session-bar">
+      <div>
+        <strong id="sessionName">Compte</strong>
+        <span class="muted" id="sessionRole">Role</span>
+      </div>
+      <div class="actions">
+        <button class="secondary" type="button" id="themeToggle" title="Changer de theme" style="padding: 0.5rem; width: 40px; height: 40px;">
+          <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+        <span class="role-badge" id="roleBadge">Utilisateur</span>
+        <button class="secondary" type="button" id="logoutButton">Se deconnecter</button>
+      </div>
+    </section>
+
+    <div id="toast-container"></div>
+
+    <section class="hero">
+      <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start;">
+        <div>
+          <h1>Suivi de Reparation</h1>
+          <p>Gardez un registre simple des telephones, tablettes, ordinateurs, imprimantes, cameras, PDA et autres appareils electroniques recus en atelier. Ajoutez chaque dossier, suivez son statut et retrouvez-le rapidement quand un client demande des nouvelles.</p>
+        </div>
+        <div class="card panel" style="margin-bottom: 0;">
+          <h2 style="font-size: 1rem; margin-bottom: 0.5rem;">Performance (CA Delivre)</h2>
+          <div class="chart-container" id="revenueChart">
+            <svg width="100%" height="100%" viewBox="0 0 300 150" preserveAspectRatio="none" id="revenueSvg">
+              <!-- Bars injected by JS -->
+            </svg>
+            <div id="chartLabels" style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.65rem;" class="muted">
+              <span>Lundi</span><span>Dimanche</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card card">
+          <small>Total Dossiers</small>
+          <strong id="totalJobs">0</strong>
+        </article>
+        <article class="summary-card card">
+          <small>En Attente</small>
+          <strong id="waitingJobs">0</strong>
+        </article>
+        <article class="summary-card card">
+          <small>Pret</small>
+          <strong id="readyJobs">0</strong>
+        </article>
+        <article class="summary-card card">
+          <small>Livres</small>
+          <strong id="deliveredJobs">0</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="scan-panel card">
+      <div>
+        <h2>Enregistrement Rapide</h2>
+        <p>Scannez un code-barres ou un numero de serie pour creer un dossier instantanÃ©ment.</p>
+      </div>
+      <form id="scanForm" class="scan-grid">
+        <div class="field">
+          <label for="scanCode">Scan SN / PN</label>
+          <input id="scanCode" name="scanCode" placeholder="Numero de serie ou piece" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="scanCustomerName">Nom du client</label>
+          <input id="scanCustomerName" name="scanCustomerName" placeholder="Client (optionnel)">
+        </div>
+        <div class="field">
+          <label for="scanDeviceType">Type</label>
+          <select id="scanDeviceType" name="scanDeviceType" required>
+            <option value="Computer">Ordinateur</option>
+            <option value="Laptop">Portable</option>
+            <option value="Desktop">Bureau</option>
+            <option value="PDA">PDA</option>
+            <option value="Phone">Telephone</option>
+            <option value="Tablet">Tablette</option>
+            <option value="Smart Watch">Montre connectee</option>
+            <option value="Camera">Camera</option>
+            <option value="CCTV">CCTV</option>
+            <option value="Monitor">Moniteur</option>
+            <option value="Television">Television</option>
+            <option value="Printer">Imprimante</option>
+            <option value="Scanner">Scanner</option>
+            <option value="Projector">Projecteur</option>
+            <option value="Game Console">Console</option>
+            <option value="Speaker">Haut-parleur</option>
+            <option value="Amplifier">Amplificateur</option>
+            <option value="Router">Router</option>
+            <option value="Modem">Modem</option>
+            <option value="POS Terminal">POS Terminal</option>
+            <option value="UPS">UPS</option>
+            <option value="Inverter">Inverter</option>
+            <option value="Power Supply">Alimentation</option>
+            <option value="Keyboard">Clavier</option>
+            <option value="Mouse">Souris</option>
+            <option value="External Drive">Disque externe</option>
+            <option value="Other">Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="scanBrandModel">Marque / Modele</label>
+          <input id="scanBrandModel" name="scanBrandModel" placeholder="Modele (optionnel)">
+        </div>
+        <div class="field actions">
+          <button class="primary" type="submit">Creer</button>
+        </div>
+      </form>
+      <div class="scan-result" id="scanResult">Aucun produit scanne pour le moment.</div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel card">
+        <h2 id="formTitle">Nouveau dossier</h2>
+        <p>Remplissez les informations de reparation ci-dessous.</p>
+
+        <form id="repairForm" class="form-grid">
+          <div class="field">
+            <label for="customerName">Client</label>
+            <input id="customerName" name="customerName" required list="customerNamesList" autocomplete="off">
+            <datalist id="customerNamesList"></datalist>
+          </div>
+          <div class="field">
+            <label for="phoneNumber">Telephone</label>
+            <input id="phoneNumber" name="phoneNumber" list="customerPhonesList" autocomplete="off">
+            <datalist id="customerPhonesList"></datalist>
+          </div>
+          <div class="field">
+            <label for="deviceType">Type</label>
+            <select id="deviceType" name="deviceType" required>
+              <option value="Computer">Ordinateur</option>
+              <option value="Laptop">Portable</option>
+              <option value="Desktop">Bureau</option>
+              <option value="PDA">PDA</option>
+              <option value="Phone">Telephone</option>
+              <option value="Tablet">Tablette</option>
+              <option value="Smart Watch">Montre connectee</option>
+              <option value="Camera">Camera</option>
+              <option value="CCTV">CCTV</option>
+              <option value="Monitor">Moniteur</option>
+              <option value="Television">Television</option>
+              <option value="Printer">Imprimante</option>
+              <option value="Scanner">Scanner</option>
+              <option value="Projector">Projecteur</option>
+              <option value="Game Console">Console</option>
+              <option value="Speaker">Haut-parleur</option>
+              <option value="Amplifier">Amplificateur</option>
+              <option value="Router">Router</option>
+              <option value="Modem">Modem</option>
+              <option value="POS Terminal">POS Terminal</option>
+              <option value="UPS">UPS</option>
+              <option value="Inverter">Inverter</option>
+              <option value="Power Supply">Alimentation</option>
+              <option value="Keyboard">Clavier</option>
+              <option value="Mouse">Souris</option>
+              <option value="External Drive">Disque externe</option>
+              <option value="Other">Autre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="status">Statut</label>
+            <select id="status" name="status" required>
+              <option value="Received">Recu</option>
+              <option value="Diagnosis">Diagnostic</option>
+              <option value="Repairing">Reparation</option>
+              <option value="Ready">Pret</option>
+              <option value="Delivered">Livre</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Livraison et paiement</label>
+            <div class="delivery-box">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="deliveryDecision">Sortie</label>
+                  <select id="deliveryDecision" name="deliveryDecision">
+                    <option value="Pending">Pas encore</option>
+                    <option value="Ready">Pret</option>
+                    <option value="Delivered">Livre</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="deliveredDate">Date sortie</label>
+                  <input id="deliveredDate" name="deliveredDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="amount">Montant (TND)</label>
+                  <input id="amount" name="amount" type="number" min="0" step="0.01">
+                </div>
+                <div class="field">
+                  <label for="paidStatus">Paye</label>
+                  <select id="paidStatus" name="paidStatus">
+                    <option value="No">Non</option>
+                    <option value="Yes">Oui</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="brandModel">Marque / Modele</label>
+            <input id="brandModel" name="brandModel">
+          </div>
+          <div class="field">
+            <label for="productNumber">Code unique</label>
+            <input id="productNumber" name="productNumber" readonly placeholder="Auto">
+          </div>
+          <div class="field">
+            <label for="serialNumber">SN</label>
+            <input id="serialNumber" name="serialNumber">
+          </div>
+          <div class="field">
+            <label for="scanReference">PN</label>
+            <input id="scanReference" name="scanReference">
+          </div>
+          <div class="field">
+            <label for="receivedDate">Date depot</label>
+            <input id="receivedDate" name="receivedDate" type="date" required>
+          </div>
+          <div class="field full">
+            <label for="problem">Panne signalee</label>
+            <textarea id="problem" name="problem"></textarea>
+          </div>
+          <div class="field full">
+            <label for="repairDone">Travail effectue</label>
+            <textarea id="repairDone" name="repairDone"></textarea>
+          </div>
+          <div class="field full">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes"></textarea>
+          </div>
+          <div class="field full">
+            <label>Sous-traitance</label>
+            <div class="subcontract-box">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="isSubcontracted">Envoye</label>
+                  <select id="isSubcontracted" name="isSubcontracted">
+                    <option value="No">Non</option>
+                    <option value="Yes">Oui</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="subcontractCompany">Atelier</label>
+                  <input id="subcontractCompany" name="subcontractCompany">
+                </div>
+                <div class="field">
+                  <label for="subcontractSentDate">Date envoi</label>
+                  <input id="subcontractSentDate" name="subcontractSentDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="subcontractReturnStatus">Revenu</label>
+                  <select id="subcontractReturnStatus" name="subcontractReturnStatus">
+                    <option value="Pending">Non</option>
+                    <option value="Returned">Oui</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="subcontractReturnedDate">Date retour</label>
+                  <input id="subcontractReturnedDate" name="subcontractReturnedDate" type="date">
+                </div>
+                <div class="field full">
+                  <label for="subcontractNotes">Notes sous-traitance</label>
+                  <textarea id="subcontractNotes" name="subcontractNotes"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Accessoires</label>
+            <div class="checks-grid">
+              <label class="check-item"><input type="checkbox" name="accessories" value="Chargeur"> Chargeur</label>
+              <label class="check-item"><input type="checkbox" name="accessories" value="Cable d'alimentation"> Cable</label>
+              <label class="check-item"><input type="checkbox" name="accessories" value="Batterie"> Batterie</label>
+              <label class="check-item"><input type="checkbox" name="accessories" value="Sac / Housse"> Sac</label>
+              <label class="check-item"><input type="checkbox" name="accessories" value="Autre"> Autre</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="otherAccessory">Autre accessoire</label>
+            <input id="otherAccessory" name="otherAccessory">
+          </div>
+          <div class="field full">
+            <label>Etat</label>
+            <div class="checks-grid">
+              <label class="check-item"><input type="checkbox" name="deviceCondition" value="Bon etat"> Bon etat</label>
+              <label class="check-item"><input type="checkbox" name="deviceCondition" value="Rayures"> Rayures</label>
+              <label class="check-item"><input type="checkbox" name="deviceCondition" value="Ecran endommage"> Ecran HS</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="conditionRemarks">Remarques etat</label>
+            <textarea id="conditionRemarks" name="conditionRemarks"></textarea>
+          </div>
+          <div class="field">
+            <label for="technicianName">Technicien</label>
+            <input id="technicianName" name="technicianName">
+          </div>
+          <div class="field full">
+            <label>Etat a la restitution</label>
+            <div class="checks-grid">
+              <label class="check-item"><input type="checkbox" name="returnCondition" value="Teste et fonctionnel"> Teste et fonctionnel</label>
+              <label class="check-item"><input type="checkbox" name="returnCondition" value="Restitue en bon etat"> Restitue en bon etat</label>
+              <label class="check-item"><input type="checkbox" name="returnCondition" value="Client satisfait"> Client satisfait</label>
+            </div>
+          </div>
+          <input id="editingId" name="editingId" type="hidden">
+          <input id="productNumber" name="productNumber" type="hidden">
+          <div class="field full actions">
+
+            <button class="primary" type="submit" id="saveButton">Enregistrer</button>
+            <button class="secondary" type="button" id="printFormButton">B. Depot</button>
+            <button class="secondary" type="button" id="printPickupFormButton">B. Retrait</button>
+            <button class="secondary" type="button" id="resetButton">Vider</button>
+          </div>
+        </form>
+      </aside>
+
+      <main class="panel card">
+        <div class="toolbar" style="justify-content: space-between; margin-bottom: 1.5rem;">
+          <div>
+            <h2 style="margin:0;">Dossiers</h2>
+          </div>
+          <div class="actions">
+            <button class="secondary" type="button" id="exportButton">Export Excel</button>
+            <button class="secondary" type="button" id="importButton">Import Excel</button>
+            <button class="danger" type="button" id="clearAllButton">Tout effacer</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="field">
+            <label for="searchInput">Recherche</label>
+            <input id="searchInput" placeholder="Nom, SN, Code...">
+          </div>
+          <div class="field">
+            <label for="filterStatus">Statut</label>
+            <select id="filterStatus">
+              <option value="All">Tous</option>
+              <option value="Received">Recu</option>
+              <option value="Diagnosis">Diagnostic</option>
+              <option value="Repairing">Reparation</option>
+              <option value="Ready">Pret</option>
+              <option value="Delivered">Livre</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-head">
+            <div>Code</div>
+            <div>No Interne</div>
+            <div>Type</div>
+            <div>Client / Appareil</div>
+            <div>Statut</div>
+            <div>Depot</div>
+            <div>Montant</div>
+            <div>SN / PN</div>
+            <div>Telephone</div>
+            <div>Sous-traitance</div>
+            <div>Actions</div>
+          </div>
+          <div id="jobsList"></div>
+        </div>
+        <p class="small muted" style="margin-top: 1rem;">Export au format Excel (.xlsx) et PDF (.pdf).</p>
+      </main>
+    </section>
+
+    <footer style="margin-top: 4rem; padding: 2.5rem 0; border-top: 1px solid var(--border); text-align: center;" class="muted">
+      <div style="margin-bottom: 1rem;">&copy; 2026 Aster Informatique. Tous droits reserves.</div>
+      <div style="display: flex; justify-content: center; gap: 2rem; font-size: 0.8rem;">
+        <span>Aster v2.5 â€¢ Professionnel</span>
+        <span style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 5px var(--success);"></span>
+          Systeme SQL Operationnel
+        </span>
+      </div>
+    </footer>
+  </div>
+
+  <div id="printSlipsContainer" style="display: none;">
+        <section id="printSlip" class="print-slip">
+      <div class="receipt-header-top">
+        <div style="margin-bottom: 1rem;">
+          <img src="/static/logo.png" alt="Logo" style="height: 60px; width: auto;">
+        </div>
+        <h1>ASTER INFORMATIQUE</h1>
+        <p>Réparation Informatique • Imprimantes • Caméras • UPS</p>
+        <p>📞 71881002</p>
+        <p>📍 Impasse 1, 06 Avenue Abdellaziz Thaalbi، Tunis 1013</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <h2 class="receipt-title">BON DE DÉPÔT</h2>
+      <div class="receipt-meta">
+        <div><strong>N° Réparation :</strong> <span id="slipProductNumber">-</span></div>
+        <div><strong>Date :</strong> <span id="slipReceivedDate">-</span></div>
+      </div>
+      <div class="receipt-section">
+        <h3>Informations Client</h3>
+        <p><strong>Nom :</strong> <span id="slipCustomerName">-</span></p>
+        <p><strong>Téléphone :</strong> <span id="slipPhoneNumber">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>Informations Appareil</h3>
+        <p><strong>Type :</strong> (PC / Imprimante / Caméra / UPS / Autre) : <span id="slipDeviceType">-</span></p>
+        <p><strong>Marque & Modèle :</strong> <span id="slipBrandModel">-</span></p>
+        <p><strong>Numéro de série :</strong> <span id="slipSerialNumber">-</span></p>
+        <p><strong>Code scanné :</strong> <span id="slipScanReference">-</span></p>
+        <p><strong>Bon interne :</strong> <span id="slipJobId">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>⚠️ Panne Signalée</h3>
+        <div class="lined-box" id="slipProblem">-</div>
+      </div>
+      <div class="receipt-section">
+        <h3>🔌 Accessoires Remis</h3>
+        <div class="tick-grid" id="slipAccessories"></div>
+        <p><strong>Autre :</strong> <span id="slipOtherAccessory">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>🔍 État de l’Appareil</h3>
+        <div class="tick-grid" id="slipCondition"></div>
+        <p><strong>Remarques :</strong> <span id="slipConditionRemarks">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>📍 Statut</h3>
+        <p>Appareil reçu pour diagnostic / réparation</p>
+      </div>
+      <div class="receipt-section">
+        <h3>✍️ Signatures</h3>
+        <div class="signature-row">
+          <div class="signature-box"><span>Signature du client</span></div>
+          <div class="signature-box"><span id="slipTechnicianName">Signature du technicien</span></div>
+        </div>
+      </div>
+      <div class="receipt-divider"></div>
+      <p class="receipt-warning">⚠️ <em>Aster Informatique n’est pas responsable des défauts cachés non visibles lors du dépôt.</em></p>
+    </section>
+
+    <section id="pickupSlip" class="print-slip">
+      <div class="receipt-header-top">
+        <div style="margin-bottom: 1rem;">
+          <img src="/static/logo.png" alt="Logo" style="height: 60px; width: auto;">
+        </div>
+        <h1>ASTER INFORMATIQUE</h1>
+        <p>Réparation Informatique • Imprimantes • Caméras • UPS</p>
+        <p>📞 71881002</p>
+        <p>📍 Impasse 1, 06 Avenue Abdellaziz Thaalbi، Tunis 1013</p>
+      </div>
+      <div class="receipt-divider"></div>
+      <h2 class="receipt-title">BON DE RETRAIT</h2>
+      <div class="receipt-meta">
+        <div><strong>N° Réparation :</strong> <span id="pickupProductNumber">-</span></div>
+        <div><strong>Date de sortie :</strong> <span id="pickupDate">-</span></div>
+      </div>
+      <div class="receipt-section">
+        <h3>Informations Client</h3>
+        <p><strong>Nom :</strong> <span id="pickupCustomerName">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>Appareil</h3>
+        <p><strong>Type :</strong> <span id="pickupDeviceType">-</span></p>
+        <p><strong>Marque & Modèle :</strong> <span id="pickupBrandModel">-</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>Travail Effectué</h3>
+        <div class="lined-box" id="pickupRepairDone">-</div>
+      </div>
+      <div class="receipt-section">
+        <h3>Paiement</h3>
+        <p><strong>Total :</strong> <span id="pickupAmount">-</span> TND</p>
+        <p><strong>Payé :</strong> <span id="pickupPaidStatus">☐ Oui ☒ Non</span></p>
+      </div>
+      <div class="receipt-section">
+        <h3>État à la restitution</h3>
+        <div class="tick-grid" id="pickupReturnState"></div>
+      </div>
+      <div class="receipt-section">
+        <h3>Signatures</h3>
+        <div class="signature-row">
+          <div class="signature-box"><span>Signature du client</span></div>
+          <div class="signature-box"><span id="pickupTechnicianName">Signature du technicien</span></div>
+        </div>
+      </div>
+      <div class="receipt-divider"></div>
+      <p class="receipt-warning">Par sa signature, le client confirme avoir recupere son appareil.</p>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+
