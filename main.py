@@ -29,7 +29,7 @@ app = FastAPI(title="Aster Informatique - Repair Tracker", lifespan=lifespan)
 
 # Setup templates and static files
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="."), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Simple session store
 SESSIONS = {}
@@ -369,4 +369,3 @@ if __name__ == "__main__":
     import uvicorn
     db.init_dbs()
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
