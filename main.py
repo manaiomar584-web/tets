@@ -17,7 +17,15 @@ import pandas as pd
 import database as db
 import pdf_gen
 
-app = FastAPI(title="Aster Informatique - Repair Tracker")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize databases and create default users on startup
+    db.init_dbs()
+    yield
+
+app = FastAPI(title="Aster Informatique - Repair Tracker", lifespan=lifespan)
 
 # Setup templates and static files
 templates = Jinja2Templates(directory="templates")
@@ -361,3 +369,4 @@ if __name__ == "__main__":
     import uvicorn
     db.init_dbs()
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
